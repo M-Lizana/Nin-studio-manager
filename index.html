@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NIN Studio Manager - Exportador AE</title>
+    <title>NIN Studio Manager - Sincronizador SRT</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -93,7 +93,7 @@
             font-size: 14px;
             margin-top: 8px;
         }
-        /* Resultados de la IA */
+        /* Resultados */
         .results-container {
             display: none;
             margin-top: 30px;
@@ -147,7 +147,7 @@
             margin-bottom: 8px;
         }
         .time-badge {
-            background-color: #89b4fa;
+            background-color: #f9e2af;
             color: #11111b;
             padding: 2px 6px;
             border-radius: 4px;
@@ -157,17 +157,6 @@
             font-size: 13px;
             color: #bac2de;
             line-height: 1.4;
-        }
-        .assets-tag {
-            display: inline-block;
-            background-color: #313244;
-            color: #cdd6f4;
-            padding: 3px 8px;
-            border-radius: 4px;
-            font-size: 11px;
-            margin-top: 8px;
-            margin-right: 5px;
-            border: 1px solid #45475a;
         }
     </style>
 </head>
@@ -179,16 +168,17 @@
     <div class="dropzone" id="dropzone">
         <div class="dropzone-icon">📁</div>
         <div class="dropzone-text" id="dropzone-instruction">
-            <strong>Selecciona y arrastra JUNTOS el audio (.mp3/.wav) y la letra (.txt)</strong><br>
+            <strong>Arrastra JUNTOS el audio (.mp3/.wav) y tus subtítulos (.srt)</strong><br>
             o suéltalos aquí a la vez
         </div>
         
         <div class="file-status-container">
             <div class="file-badge" id="badge-audio">❌ Sin Audio</div>
-            <div class="file-badge" id="badge-text">❌ Sin Letra (.txt)</div>
+            <div class="file-badge" id="badge-text">❌ Sin Subtítulos (.srt)</div>
         </div>
     </div>
 
+    <!-- Pantalla de Carga -->
     <div class="loading-container" id="loading-container">
         <div class="progress-bar">
             <div class="progress-fill" id="progress-fill"></div>
@@ -196,10 +186,11 @@
         <div class="loading-text" id="loading-text">Esperando archivos...</div>
     </div>
 
+    <!-- Resultados Dinámicos con botón de exportación -->
     <div class="results-container" id="results-container">
         <div class="results-header">
-            <h2 class="results-title">✨ Plan de Animación Realizado</h2>
-            <button class="export-btn" id="export-btn">📥 Exportar a After Effects</button>
+            <h2 class="results-title">✨ Plan Sincronizado por SRT</h2>
+            <button class="export-btn" id="export-btn">📥 Exportar Marcadores a After Effects</button>
         </div>
         <div id="dynamic-cards-container"></div>
     </div>
@@ -217,9 +208,9 @@
     const exportBtn = document.getElementById('export-btn');
 
     let audioFile = null;
-    let textFile = null;
-    let letraContenido = "";
-    let parrafosProcesados = [];
+    let srtFile = null;
+    let srtContent = "";
+    let marcadoresSincronizados = [];
 
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
         dropzone.addEventListener(eventName, preventDefaults, false);
@@ -253,34 +244,34 @@
                 audioFile = file;
                 badgeAudio.innerText = `🎵 ${file.name}`;
                 badgeAudio.classList.add('loaded');
-            } else if (file.name.endsWith('.txt')) {
-                textFile = file;
+            } else if (file.name.endsWith('.srt')) {
+                srtFile = file;
                 badgeText.innerText = `📄 ${file.name}`;
                 badgeText.classList.add('loaded');
                 
                 const reader = new FileReader();
                 reader.onload = function(event) {
-                    letraContenido = event.target.result;
+                    srtContent = event.target.result;
                 };
                 reader.readAsText(file);
             }
         });
 
-        if (audioFile && textFile) {
-            iniciarAnalisisReal();
+        if (audioFile && srtFile) {
+            iniciarProcesamientoSRT();
         } else {
-            alert("Para exportar, necesitas arrastrar tanto el archivo de Audio como el archivo .txt con la letra.");
+            alert("Arrastra juntos el archivo de Audio y tu archivo de subtítulos .srt");
         }
     }
 
-    function iniciarAnalisisReal() {
+    function iniciarProcesamientoSRT() {
         loadingContainer.style.display = 'block';
         resultsContainer.style.display = 'none';
         
         const etapas = [
-            { progreso: 30, texto: "Vinculando " + audioFile.name + " con el texto..." },
-            { progreso: 70, texto: "Creando estructura de tiempos para After Effects..." },
-            { progreso: 100, texto: "¡Listo para exportar!" }
+            { progreso: 40, texto: "Leyendo estructura de tiempos del SRT..." },
+            { progreso: 80, texto: "Calculando posiciones de frames para After Effects..." },
+            { progreso: 100, texto: "Sincronización milimétrica completada." }
         ];
 
         let etapaActual = 0;
@@ -294,34 +285,53 @@
                 clearInterval(intervalo);
                 setTimeout(() => {
                     loadingContainer.style.display = 'none';
-                    procesarYMostrarLetra();
+                    parsearSRT();
                 }, 600);
             }
-        }, 1000);
+        }, 800);
     }
 
-    function procesarYMostrarLetra() {
+    // El "motor" que traduce el archivo SRT a datos limpios
+    function parsearSRT() {
         dynamicCardsContainer.innerHTML = "";
-        parrafosProcesados = letraContenido.split('\n').map(p => p.trim()).filter(p => p.length > 0);
+        marcadoresSincronizados = [];
 
-        if (parrafosProcesados.length === 0) {
-            parrafosProcesados.push("Letra de ejemplo");
-        }
+        // Limpieza básica de saltos de línea para que sea uniforme
+        const bloques = srtContent.replace(/\r\n/g, '\n').split('\n\n');
 
-        parrafosProcesados.forEach((parrafo, index) => {
-            const numEscena = index + 1;
-            const segInicio = index * 10; 
-            const segFin = (index + 1) * 10;
+        bloques.forEach((bloque) => {
+            const lineas = bloque.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+            
+            // Un bloque SRT válido suele tener al menos: 1 (Número), 00:00:02,100 --> 00:00:04,300 (Tiempos), y el Texto
+            if (lineas.length >= 3) {
+                const tiempoStr = lineas[1];
+                const textoSubtitulo = lineas.slice(2).join(' '); // Une si hay subtítulos de varias líneas
 
+                // Extraemos el tiempo de inicio (00:00:02,100)
+                const partesTiempo = tiempoStr.split('-->');
+                if (partesTiempo.length > 0) {
+                    const tiempoInicioRaw = partesTiempo[0].trim(); // "00:00:02,100"
+                    const segundosReales = srtToSegundos(tiempoInicioRaw);
+
+                    marcadoresSincronizados.push({
+                        tiempo: segundosReales,
+                        tiempoFormato: tiempoInicioRaw.substring(3, 12), // Recorta horas para mostrar MM:SS,mmm
+                        texto: textoSubtitulo
+                    });
+                }
+            }
+        });
+
+        // Mostrar en pantalla los resultados reales
+        marcadoresSincronizados.forEach((marcador, index) => {
             const cardHtml = `
-                <div class="timeline-card" style="border-left-color: ${index % 2 === 0 ? '#89b4fa' : '#f9e2af'}">
+                <div class="timeline-card" style="border-left-color: ${index % 2 === 0 ? '#89b4fa' : '#b4befe'}">
                     <div class="card-header">
-                        <span>Escena ${numEscena}: Segmento</span>
-                        <span class="time-badge">00:${segInicio.toString().padStart(2, '0')} - 00:${segFin.toString().padStart(2, '0')}</span>
+                        <span>Marcador ${index + 1}</span>
+                        <span class="time-badge">⏱️ Segundo ${marcador.tiempo.toFixed(3)}s (${marcador.tiempoFormato})</span>
                     </div>
                     <div class="card-body">
-                        <strong>Texto:</strong> "${parrafo}"<br>
-                        <em>Este fragmento se marcará automáticamente en tu línea de tiempo de After Effects.</em>
+                        <strong>Texto del Subtítulo:</strong> "${marcador.texto}"
                     </div>
                 </div>
             `;
@@ -331,40 +341,44 @@
         resultsContainer.style.display = 'block';
     }
 
-    // EVENTO DEL BOTÓN: Generar y descargar el .jsx para After Effects
-    exportBtn.addEventListener('click', () => {
-        if (parrafosProcesados.length === 0) return;
+    // Traduce "00:01:15,500" a 75.5 segundos reales para el reloj de After Effects
+    function srtToSegundos(srtTime) {
+        const partes = srtTime.replace(',', '.').split(':');
+        const horas = parseFloat(partes[0]) || 0;
+        const minutos = parseFloat(partes[1]) || 0;
+        const segundos = parseFloat(partes[2]) || 0;
+        return (horas * 3600) + (minutos * 60) + segundos;
+    }
 
-        // Escribimos el código real de After Effects (ExtendScript) que interpretará el programa
-        let jsxCode = `// Script generado automáticamente por NIN Studio Manager\n`;
-        jsxCode += `app.beginUndoGroup("Crear Marcadores NIN Manager");\n\n`;
+    // EVENTO DEL BOTÓN: Generar el .jsx usando los tiempos CLAVADOS del SRT
+    exportBtn.addEventListener('click', () => {
+        if (marcadoresSincronizados.length === 0) return;
+
+        let jsxCode = `// Script generado por NIN Studio Manager (Sincronizado vía SRT)\n`;
+        jsxCode += `app.beginUndoGroup("Crear Marcadores NIN por SRT");\n\n`;
         jsxCode += `var comp = app.project.activeItem;\n`;
         jsxCode += `if (comp == null || !(comp instanceof CompItem)) {\n`;
-        jsxCode += `    comp = app.project.items.addComp("NIN_Manager_Comp", 1920, 1080, 1.0, 60, 29.97);\n`;
+        jsxCode += `    comp = app.project.items.addComp("NIN_SRT_Comp", 1920, 1080, 1.0, 60, 29.97);\n`;
         jsxCode += `}\n\n`;
-        jsxCode += `// Crear una capa nula para albergar los marcadores de producción\n`;
         jsxCode += `var markerLayer = comp.layers.addNull();\n`;
-        jsxCode += `markerLayer.name = "PLAN_DE_PRODUCCION";\n\n`;
+        jsxCode += `markerLayer.name = "PLAN_DE_PRODUCCION_SRT";\n\n`;
 
-        // Añadir cada párrafo de la letra como un marcador en el tiempo correspondiente
-        parrafosProcesados.forEach((parrafo, index) => {
-            const tiempoSegundos = index * 10; // Intervalos de 10 segundos para la prueba
-            // Reemplazar comillas para que no rompan el script de AE
-            const textoLimpio = parrafo.replace(/"/g, '\\"');
-            
-            jsxCode += `var myMarker${index} = new MarkerValue("${textoLimpio}");\n`;
-            jsxCode += `markerLayer.property("Marker").setValueAtTime(${tiempoSegundos}, myMarker${index});\n`;
+        // Colocar los marcadores en los segundos EXACTOS del SRT
+        marcadoresSincronizados.forEach((marcador, index) => {
+            const textoLimpio = marcador.texto.replace(/"/g, '\\"');
+            jsxCode += `var marker${index} = new MarkerValue("${textoLimpio}");\n`;
+            // marcador.tiempo contiene el decimal exacto (ej. 2.15 segundos)
+            jsxCode += `markerLayer.property("Marker").setValueAtTime(${marcador.tiempo}, marker${index});\n`;
         });
 
         jsxCode += `\napp.endUndoGroup();\n`;
-        jsxCode += `alert("¡Listo Mariano! Marcadores creados con éxito en la capa PLAN_DE_PRODUCCION.");\n`;
+        jsxCode += `alert("¡Listo! Se han colocado ${marcadoresSincronizados.length} marcadores en sincronización milimétrica con tu audio.");\n`;
 
-        // Forzar la descarga del archivo .jsx en el navegador
         const blob = new Blob([jsxCode], { type: 'text/javascript' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'importar_marcadores_AE.jsx';
+        a.download = 'importar_marcadores_SRT.jsx';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
