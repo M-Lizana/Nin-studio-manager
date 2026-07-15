@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NIN Studio Manager - Inteligencia Temática</title>
+    <title>NIN Studio Manager - Flujo Optimizado</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
         body {
@@ -20,7 +20,7 @@
         }
         .container {
             width: 100%;
-            max-width: 900px;
+            max-width: 1000px;
             background-color: #252538;
             padding: 30px;
             border-radius: 12px;
@@ -138,7 +138,7 @@
         
         .grid-layout {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1.1fr 1.3fr;
             gap: 20px;
         }
         .column-title {
@@ -161,36 +161,29 @@
         .folder-item { margin-left: 15px; color: #f9e2af; }
         .file-item { margin-left: 30px; color: #bac2de; }
         
-        /* Personajes */
-        .character-box {
+        /* Caja de Flow info */
+        .flow-box {
             background-color: #11111b;
             border-radius: 8px;
             padding: 15px;
             margin-top: 15px;
+            border-left: 4px solid #a6e3a1;
         }
-        .character-list {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-top: 8px;
-        }
-        .character-tag {
-            background-color: #313244;
-            color: #cdd6f4;
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 12px;
-            border: 1px solid #45475a;
-        }
-        .character-tag.main {
-            border-color: #f38ba8;
-            color: #f38ba8;
+        .flow-title {
+            font-size: 13px;
             font-weight: bold;
+            color: #a6e3a1;
+            margin-bottom: 8px;
+        }
+        .flow-text {
+            font-size: 12px;
+            color: #a6adc8;
+            line-height: 1.4;
         }
 
         /* Timeline */
         .timeline-container {
-            max-height: 400px;
+            max-height: 480px;
             overflow-y: auto;
             background-color: #11111b;
             padding: 10px;
@@ -199,8 +192,8 @@
         .timeline-card {
             background-color: #1e1e2e;
             border-radius: 6px;
-            padding: 10px;
-            margin-bottom: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
             border-left: 4px solid #89b4fa;
         }
         .card-header {
@@ -208,27 +201,49 @@
             justify-content: space-between;
             font-weight: bold;
             font-size: 12px;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
         }
         .time-badge {
             background-color: #f9e2af;
             color: #11111b;
-            padding: 1px 4px;
+            padding: 1px 6px;
             border-radius: 3px;
             font-size: 10px;
+        }
+        .asset-suggestion {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+            flex-wrap: wrap;
+        }
+        .tag-sug {
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 4px;
+            border: 1px solid;
+        }
+        .tag-bg {
+            background-color: rgba(137, 180, 250, 0.1);
+            border-color: #89b4fa;
+            color: #89b4fa;
+        }
+        .tag-char {
+            background-color: rgba(243, 139, 168, 0.1);
+            border-color: #f38ba8;
+            color: #f38ba8;
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>NIN Studio Manager</h1>
+    <h1>NIN Studio Manager - Gestor de Animación Reutilizable</h1>
     
     <div class="dropzone" id="dropzone">
-        <div class="dropzone-icon">🤖</div>
+        <div class="dropzone-icon">♻️</div>
         <div class="dropzone-text" id="dropzone-instruction">
             <strong>Suelta el Audio (.mp3/.wav) y los Subtítulos (.srt)</strong><br>
-            NIN Studio Manager detectará la temática y preparará los personajes de forma automática
+            Separando automáticamente Fondos Fijos Ilustrados de tus Animaciones con Fondo Blanco en Flow
         </div>
         
         <div class="file-status-container">
@@ -237,6 +252,7 @@
         </div>
     </div>
 
+    <!-- Pantalla de Carga -->
     <div class="loading-container" id="loading-container">
         <div class="progress-bar">
             <div class="progress-fill" id="progress-fill"></div>
@@ -244,32 +260,35 @@
         <div class="loading-text" id="loading-text">Esperando archivos...</div>
     </div>
 
+    <!-- Workspace -->
     <div class="workspace" id="workspace-container">
         <div class="results-header">
             <div>
                 <span class="category-badge" id="detected-category">Asignatura: Detectando...</span>
             </div>
             <div class="btn-group">
-                <button class="btn btn-folder" id="download-folders-btn">📂 Descargar Proyecto (.ZIP)</button>
-                <button class="btn btn-ae" id="export-ae-btn">📥 Exportar a After Effects</button>
+                <button class="btn btn-folder" id="download-folders-btn">📂 Descargar Estructura (.ZIP)</button>
+                <button class="btn btn-ae" id="export-ae-btn">📥 Exportar Marcadores a After Effects</button>
             </div>
         </div>
         
         <div class="grid-layout">
+            <!-- Columna Izquierda: Estructura de Carpetas & Filosofía de Trabajo -->
             <div>
-                <div class="column-title">📁 Organización del Disco Local</div>
+                <div class="column-title">📁 Organización del Disco (Flujo Inteligente)</div>
                 <div class="folder-tree" id="folder-tree-view"></div>
                 
-                <div class="character-box">
-                    <div class="column-title" style="margin-bottom: 5px; color: #f38ba8;">🎭 Personajes de esta producción</div>
-                    <div class="character-list" id="character-list-view">
-                        <span class="character-tag main">👑 Nin (Principal)</span>
+                <div class="flow-box">
+                    <div class="flow-title">💡 Estrategia de Reutilización NIN</div>
+                    <div class="flow-text">
+                        Para optimizar tu tiempo, las carpetas separan los <strong>Fondos Fijos</strong> (escenarios altamente reutilizables) de las <strong>Animaciones de Personajes en Fondo Blanco</strong> exportadas desde Flow. En After Effects solo tendrás que aplicar un modo de fusión (Multiplicar) para integrarlos al instante. ¡Máxima velocidad de entrega!
                     </div>
                 </div>
             </div>
             
+            <!-- Columna Derecha: Línea de tiempo -->
             <div>
-                <div class="column-title">⏱️ Línea de Tiempo Sincronizada</div>
+                <div class="column-title">⏱️ Desglose de Escenas y Recursos sugeridos</div>
                 <div class="timeline-container" id="dynamic-cards-container"></div>
             </div>
         </div>
@@ -286,7 +305,6 @@
     const workspaceContainer = document.getElementById('workspace-container');
     const dynamicCardsContainer = document.getElementById('dynamic-cards-container');
     const folderTreeView = document.getElementById('folder-tree-view');
-    const characterListView = document.getElementById('character-list-view');
     const detectedCategory = document.getElementById('detected-category');
     const exportAeBtn = document.getElementById('export-ae-btn');
     const downloadFoldersBtn = document.getElementById('download-folders-btn');
@@ -297,9 +315,6 @@
     let marcadoresSincronizados = [];
     let nombreProyectoSanitizado = "Nuevo_Proyecto";
     let categoriaProyecto = "General";
-    
-    // Lista de personajes recurrentes de la serie "NIN"
-    const amigosRecurrentes = ["Toti", "Lulu", "Milo", "Zipi"];
 
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
         dropzone.addEventListener(eventName, preventDefaults, false);
@@ -350,7 +365,7 @@
         if (audioFile && srtFile) {
             iniciarProcesamientoInteligente();
         } else {
-            alert("Arrastra juntos el archivo de Audio y tu archivo .srt");
+            alert("Arrastra juntos el archivo de Audio y tu archivo de subtítulos .srt");
         }
     }
 
@@ -359,9 +374,9 @@
         workspaceContainer.style.display = 'none';
         
         const etapas = [
-            { progreso: 30, texto: "Analizando guion y buscando palabras clave..." },
-            { progreso: 70, texto: "Clasificando asignatura y cargando biblioteca de Nin..." },
-            { progreso: 100, texto: "¡Entorno de producción listo!" }
+            { progreso: 30, texto: "Buscando patrones en el guion..." },
+            { progreso: 70, texto: "Asociando fondos fijos y personajes de Flow..." },
+            { progreso: 100, texto: "¡Plan de animación reutilizable listo!" }
         ];
 
         let etapaActual = 0;
@@ -385,7 +400,7 @@
         dynamicCardsContainer.innerHTML = "";
         marcadoresSincronizados = [];
         
-        // 1. Clasificación automática analizando el texto
+        // 1. Clasificación automática
         const textoCompletoMinusculas = srtContent.toLowerCase();
         
         if (textoCompletoMinusculas.match(/siete|ocho|nueve|multiplicar|tabla|sumar|restar|número|numero/)) {
@@ -396,13 +411,13 @@
             categoriaProyecto = "Geografia";
             detectedCategory.innerText = "🌍 Asignatura: Geografía";
             detectedCategory.style.backgroundColor = "#89b4fa";
-        } else if (textoCompletoMinusculas.match(/lengua|verbo|sujeto|letra|abecedario|ortografía|palabra/)) {
+        } else if (textoCompletoMinusculas.match(/estudian|estudia|lengua|verbo|sujeto|letra|abecedario|palabra|escribir/)) {
             categoriaProyecto = "Lengua";
-            detectedCategory.innerText = "✍️ Asignatura: Lengua";
+            detectedCategory.innerText = "✍️ Asignatura: Lengua / Expresión";
             detectedCategory.style.backgroundColor = "#f38ba8";
         } else {
             categoriaProyecto = "General";
-            detectedCategory.innerText = "🎵 Asignatura: General / Música";
+            detectedCategory.innerText = "🎵 Asignatura: General";
             detectedCategory.style.backgroundColor = "#cba6f7";
         }
 
@@ -425,44 +440,59 @@
             }
         });
 
-        // Pintar tarjetas del guion
+        // Pintar tarjetas del guion sugiriendo recursos con inteligencia
         marcadoresSincronizados.forEach((marcador, index) => {
+            const txt = marcador.texto.toLowerCase();
+            let fondoSugerido = "Fondo_Aula_Fijo.png";
+            let animacionSugerida = "Personaje_Nin_Generico_FondoBlanco.mov";
+
+            // Reglas de asociación inteligente para optimizar
+            if (txt.includes("estudia") || txt.includes("escribe") || txt.includes("clase")) {
+                fondoSugerido = "Fondo_Aula_Escuela_Fijo.png (Reutilizable)";
+                animacionSugerida = "Nin_y_Amigos_Estudiando_FondoBlanco.mov (De Flow)";
+            } else if (txt.includes("siete") || txt.includes("multiplicar") || txt.includes("tabla")) {
+                fondoSugerido = "Fondo_Pizarra_Matematicas_Fijo.png (Reutilizable)";
+                animacionSugerida = "Nin_Senalando_Pizarra_FondoBlanco.mov (De Flow)";
+            } else if (txt.includes("parque") || txt.includes("jugar")) {
+                fondoSugerido = "Fondo_Parque_Infantil_Fijo.png (Reutilizable)";
+                animacionSugerida = "Nin_Saltando_Alegre_FondoBlanco.mov (De Flow)";
+            }
+
             const cardHtml = `
                 <div class="timeline-card" style="border-left-color: ${index % 2 === 0 ? '#89b4fa' : '#b4befe'}">
                     <div class="card-header">
                         <span>Frase ${index + 1}</span>
                         <span class="time-badge">${marcador.tiempoFormato}</span>
                     </div>
-                    <div class="card-body">"${marcador.texto}"</div>
+                    <div class="card-body">
+                        <strong>Texto:</strong> "${marcador.texto}"
+                        <div class="asset-suggestion">
+                            <span class="tag-sug tag-bg">🖼️ Fondo fijo: ${fondoSugerido}</span>
+                            <span class="tag-sug tag-char">🎬 Flow (Fondo Blanco): ${animacionSugerida}</span>
+                        </div>
+                    </div>
                 </div>
             `;
             dynamicCardsContainer.innerHTML += cardHtml;
         });
 
-        // 3. Pintar lista de personajes en pantalla
-        characterListView.innerHTML = `<span class="character-tag main">👑 Nin (Principal)</span>`;
-        amigosRecurrentes.forEach(amigo => {
-            characterListView.innerHTML += `<span class="character-tag">👤 ${amigo}</span>`;
-        });
-
-        // 4. Dibujar la estructura visual de las carpetas organizadas por CATEGORÍA
+        // 3. Estructura visual orientada a FLOW + FONDOS FIJOS
         folderTreeView.innerHTML = `
             📁 [PROYECTOS_NIN]<br>
             <span class="folder-item">└── 📁 ${categoriaProyecto}</span><br>
             <span class="file-item" style="color: #f9e2af;">└── 📁 ${nombreProyectoSanitizado}</span><br>
-            <span class="file-item" style="margin-left: 45px;">├── 📁 01_Audio</span><br>
+            <span class="file-item" style="margin-left: 45px;">├── 📁 01_Audio_Original</span><br>
             <span class="file-item" style="margin-left: 60px; color: #a6e3a1;">└── 🎵 ${audioFile.name}</span><br>
-            <span class="file-item" style="margin-left: 45px;">├── 📁 02_Materiales</span><br>
-            <span class="file-item" style="margin-left: 60px;">├── 📁 Fondos</span><br>
-            <span class="file-item" style="margin-left: 60px; color: #f38ba8; font-weight: bold;">└── 📁 Personajes_NIN</span><br>
-            <span class="file-item" style="margin-left: 75px; color: #bac2de;">├── 👤 Nin_Principal.ai</span><br>
-            <span class="file-item" style="margin-left: 75px; color: #bac2de;">├── 👤 Toti.ai</span><br>
-            <span class="file-item" style="margin-left: 75px; color: #bac2de;">├── 👤 Lulu.ai</span><br>
-            <span class="file-item" style="margin-left: 75px; color: #bac2de;">├── 👤 Milo.ai</span><br>
-            <span class="file-item" style="margin-left: 75px; color: #bac2de;">└── 👤 Zipi.ai</span><br>
-            <span class="file-item" style="margin-left: 45px;">├── 📁 03_After_Effects</span><br>
-            <span class="file-item" style="margin-left: 60px; color: #89b4fa;">└── ⚙️ importar_marcadores_SRT.jsx</span><br>
-            <span class="file-item" style="margin-left: 45px;">└── 📁 04_Renders</span>
+            <span class="file-item" style="margin-left: 45px; color: #f5c2e7;">├── 📁 02_Proyectos_Flow</span><br>
+            <span class="file-item" style="margin-left: 60px; color: #bac2de;">└── ⚙️ ${nombreProyectoSanitizado}.flow</span><br>
+            <span class="file-item" style="margin-left: 45px;">├── 📁 03_Elementos_Visuales</span><br>
+            <span class="file-item" style="margin-left: 60px; color: #89b4fa; font-weight: bold;">├── 📁 🖼️ Fondos_Fijos_Ilustrados (Reutilizables)</span><br>
+            <span class="file-item" style="margin-left: 75px; color: #bac2de;">└── (Escenarios fijos como aulas, pizarras, etc.)</span><br>
+            <span class="file-item" style="margin-left: 60px; color: #f38ba8; font-weight: bold;">└── 📁 🎬 Animaciones_Fondo_Blanco (Desde Flow)</span><br>
+            <span class="file-item" style="margin-left: 75px; color: #bac2de;">└── (Vídeos en blanco de Nin y amigos interactuando)</span><br>
+            <span class="file-item" style="margin-left: 45px;">├── 📁 04_After_Effects</span><br>
+            <span class="file-item" style="margin-left: 60px; color: #f9e2af;">└── ⚙️ importar_marcadores_SRT.jsx</span><br>
+            <span class="file-item" style="margin-left: 45px;">└── 📁 05_Renders_Finales</span>
         `;
 
         workspaceContainer.style.display = 'block';
@@ -476,29 +506,25 @@
         return (horas * 3600) + (minutos * 60) + segundos;
     }
 
-    // EVENTO DEL BOTÓN DE CARPETAS: Generar el ZIP estructurado con Personajes
+    // EVENTO DEL BOTÓN DE CARPETAS: Generar el ZIP estructurado
     downloadFoldersBtn.addEventListener('click', () => {
         const zip = new JSZip();
         
-        // Creamos la jerarquía: [Asignatura] -> [Nombre_Proyecto]
         const folderCategoria = zip.folder(categoriaProyecto);
         const folderProyecto = folderCategoria.folder(nombreProyectoSanitizado);
         
-        const fAudio = folderProyecto.folder("01_Audio");
-        const fMateriales = folderProyecto.folder("02_Materiales");
-        fMateriales.folder("Fondos");
+        const fAudio = folderProyecto.folder("01_Audio_Original");
+        const fProyectosFlow = folderProyecto.folder("02_Proyectos_Flow");
+        fProyectosFlow.file(`${nombreProyectoSanitizado}.flow`, "// Proyecto de Flow para tus animaciones de personajes con fondo blanco");
+
+        const fElementos = folderProyecto.folder("03_Elementos_Visuales");
+        fElementos.folder("Fondos_Fijos_Ilustrados");
+        fElementos.folder("Animaciones_Fondo_Blanco");
         
-        // Creamos la carpeta de Personajes de NIN y pre-cargamos archivos plantilla vacíos
-        const fPersonajes = fMateriales.folder("Personajes_NIN");
-        fPersonajes.file("Nin_Principal.ai", "// Plantilla para ilustración de Nin");
-        amigosRecurrentes.forEach(amigo => {
-            fPersonajes.file(`${amigo}.ai`, `// Plantilla para ilustración de ${amigo}`);
-        });
+        const fAE = folderProyecto.folder("04_After_Effects");
+        folderProyecto.folder("05_Renders_Finales");
 
-        const fAE = folderProyecto.folder("03_After_Effects");
-        folderProyecto.folder("04_Renders");
-
-        // Metemos el audio importado por el usuario
+        // Metemos el audio original
         fAudio.file(audioFile.name, audioFile);
 
         // Generamos el script de After Effects
@@ -522,7 +548,7 @@
             const url = URL.createObjectURL(content);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `${nombreProyectoSanitizado}_produccion_NIN.zip`;
+            a.download = `${nombreProyectoSanitizado}_produccion_FLOW_eficiente.zip`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
