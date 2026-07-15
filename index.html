@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NIN Studio Manager - Prototipo</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #1e1e2e;
+            color: #cdd6f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            width: 90%;
+            max-width: 600px;
+            background-color: #252538;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+        h1 {
+            color: #89b4fa;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+        .dropzone {
+            border: 3px dashed #89b4fa;
+            border-radius: 10px;
+            padding: 50px 20px;
+            cursor: pointer;
+            transition: background-color 0.3s, border-color 0.3s;
+            background-color: #1e1e2e;
+        }
+        .dropzone:hover {
+            background-color: rgba(137, 180, 250, 0.05);
+            border-color: #b4befe;
+        }
+        .dropzone-text {
+            font-size: 16px;
+            color: #a6adc8;
+        }
+        .dropzone-icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+            color: #89b4fa;
+        }
+        .tip-box {
+            margin-top: 25px;
+            padding: 15px;
+            background-color: #313244;
+            border-left: 4px solid #f9e2af;
+            border-radius: 4px;
+            text-align: left;
+            font-size: 13px;
+            color: #bac2de;
+            line-height: 1.5;
+        }
+        .tip-title {
+            font-weight: bold;
+            color: #f9e2af;
+            margin-bottom: 5px;
+        }
+        #file-name {
+            margin-top: 15px;
+            font-weight: bold;
+            color: #a6e3a1;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>NIN Studio Manager</h1>
+    
+    <div class="dropzone" id="dropzone">
+        <div class="dropzone-icon">🎵</div>
+        <div class="dropzone-text" id="dropzone-instruction">
+            <strong>Arrastra aquí tu audio (.mp3 o .wav)</strong><br>
+            o haz clic para buscar en tu PC
+        </div>
+        <div id="file-name"></div>
+    </div>
+
+    <div class="tip-box">
+        <div class="tip-title">ℹ️ Consejo de producción</div>
+        Recuerda nombrar la letra de la canción igual que el audio (ej: <code>cancion1.mp3</code> y <code>cancion1.txt</code>). La app los emparejará y analizará automáticamente en segundo plano.
+    </div>
+</div>
+
+<script>
+    const dropzone = document.getElementById('dropzone');
+    const fileNameDiv = document.getElementById('file-name');
+    const instructionText = document.getElementById('dropzone-instruction');
+
+    // Prevenir comportamientos por defecto al arrastrar archivos
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropzone.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults (e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    // Efecto visual al arrastrar encima
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropzone.addEventListener(eventName, () => {
+            dropzone.style.backgroundColor = 'rgba(137, 180, 250, 0.15)';
+        }, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropzone.addEventListener(eventName, () => {
+            dropzone.style.backgroundColor = '#1e1e2e';
+        }, false);
+    });
+
+    // Detectar archivo soltado
+    dropzone.addEventListener('drop', handleDrop, false);
+
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+
+        if(files.length > 0) {
+            const file = files[0];
+            if(file.name.endsWith('.mp3') || file.name.endsWith('.wav')) {
+                instructionText.style.display = 'none';
+                fileNameDiv.innerHTML = `✅ Archivo cargado: ${file.name} (${(file.size/1024/1024).toFixed(2)} MB)`;
+                
+                // Aquí es donde en el futuro llamaremos a la IA para que empiece la magia
+                alert(`¡Audio "${file.name}" detectado! Iniciando análisis silencioso de ritmo...`);
+            } else {
+                alert('Por favor, arrastra solo archivos de audio .mp3 o .wav');
+            }
+        }
+    }
+</script>
+
+</body>
+</html>
