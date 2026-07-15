@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NIN Studio Manager - Gestor de Carpetas</title>
+    <title>NIN Studio Manager - Inteligencia Temática</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
         body {
@@ -20,7 +20,7 @@
         }
         .container {
             width: 100%;
-            max-width: 850px;
+            max-width: 900px;
             background-color: #252538;
             padding: 30px;
             border-radius: 12px;
@@ -44,14 +44,10 @@
             background-color: rgba(137, 180, 250, 0.05);
             border-color: #b4befe;
         }
-        .dropzone-text {
-            font-size: 16px;
-            color: #a6adc8;
-        }
         .dropzone-icon {
             font-size: 40px;
-            margin-bottom: 10px;
             color: #89b4fa;
+            margin-bottom: 10px;
         }
         .file-status-container {
             margin-top: 15px;
@@ -71,7 +67,7 @@
             border-color: #a6e3a1;
             color: #a6e3a1;
         }
-        /* Barra de carga */
+        /* Carga */
         .loading-container {
             display: none;
             margin: 20px 0;
@@ -94,7 +90,7 @@
             font-size: 14px;
             margin-top: 8px;
         }
-        /* Área de Trabajo y Resultados */
+        /* Workspace */
         .workspace {
             display: none;
             margin-top: 30px;
@@ -113,10 +109,13 @@
             padding-bottom: 12px;
             margin-bottom: 20px;
         }
-        .results-title {
-            color: #f9e2af;
-            font-size: 18px;
-            margin: 0;
+        .category-badge {
+            background-color: #f9e2af;
+            color: #11111b;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 13px;
         }
         .btn-group {
             display: flex;
@@ -129,55 +128,78 @@
             font-weight: bold;
             cursor: pointer;
             transition: background-color 0.2s, transform 0.1s;
-            font-size: 14px;
+            font-size: 13px;
         }
-        .btn:hover {
-            transform: scale(1.02);
-        }
-        .btn-ae {
-            background-color: #a6e3a1;
-            color: #11111b;
-        }
+        .btn:hover { transform: scale(1.02); }
+        .btn-ae { background-color: #a6e3a1; color: #11111b; }
         .btn-ae:hover { background-color: #94e2d5; }
-        .btn-folder {
-            background-color: #89b4fa;
-            color: #11111b;
-        }
+        .btn-folder { background-color: #89b4fa; color: #11111b; }
         .btn-folder:hover { background-color: #b4befe; }
         
-        /* Layout Dos Columnas */
         .grid-layout {
             display: grid;
-            grid-template-columns: 1fr 1.2fr;
+            grid-template-columns: 1fr 1fr;
             gap: 20px;
         }
         .column-title {
-            font-size: 14px;
+            font-size: 13px;
             color: #bac2de;
             text-transform: uppercase;
             letter-spacing: 1px;
             margin-bottom: 10px;
             font-weight: bold;
         }
-        
-        /* Estructura de carpetas visual */
         .folder-tree {
             background-color: #11111b;
             border-radius: 8px;
             padding: 15px;
             font-family: monospace;
-            font-size: 13px;
+            font-size: 12px;
             color: #a6e3a1;
             line-height: 1.6;
         }
         .folder-item { margin-left: 15px; color: #f9e2af; }
         .file-item { margin-left: 30px; color: #bac2de; }
-
-        /* Lista de Marcadores */
-        .timeline-card {
+        
+        /* Personajes */
+        .character-box {
             background-color: #11111b;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        .character-list {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+        .character-tag {
+            background-color: #313244;
+            color: #cdd6f4;
+            padding: 4px 10px;
             border-radius: 6px;
-            padding: 12px;
+            font-size: 12px;
+            border: 1px solid #45475a;
+        }
+        .character-tag.main {
+            border-color: #f38ba8;
+            color: #f38ba8;
+            font-weight: bold;
+        }
+
+        /* Timeline */
+        .timeline-container {
+            max-height: 400px;
+            overflow-y: auto;
+            background-color: #11111b;
+            padding: 10px;
+            border-radius: 8px;
+        }
+        .timeline-card {
+            background-color: #1e1e2e;
+            border-radius: 6px;
+            padding: 10px;
             margin-bottom: 8px;
             border-left: 4px solid #89b4fa;
         }
@@ -185,7 +207,7 @@
             display: flex;
             justify-content: space-between;
             font-weight: bold;
-            font-size: 13px;
+            font-size: 12px;
             margin-bottom: 5px;
         }
         .time-badge {
@@ -195,10 +217,6 @@
             border-radius: 3px;
             font-size: 10px;
         }
-        .card-body {
-            font-size: 12px;
-            color: #bac2de;
-        }
     </style>
 </head>
 <body>
@@ -207,10 +225,10 @@
     <h1>NIN Studio Manager</h1>
     
     <div class="dropzone" id="dropzone">
-        <div class="dropzone-icon">📁</div>
+        <div class="dropzone-icon">🤖</div>
         <div class="dropzone-text" id="dropzone-instruction">
-            <strong>Arrastra JUNTOS el audio (.mp3/.wav) y tus subtítulos (.srt)</strong><br>
-            para generar automáticamente la estructura de producción
+            <strong>Suelta el Audio (.mp3/.wav) y los Subtítulos (.srt)</strong><br>
+            NIN Studio Manager detectará la temática y preparará los personajes de forma automática
         </div>
         
         <div class="file-status-container">
@@ -228,23 +246,31 @@
 
     <div class="workspace" id="workspace-container">
         <div class="results-header">
-            <h2 class="results-title">✨ Proyecto Estructurado con Éxito</h2>
+            <div>
+                <span class="category-badge" id="detected-category">Asignatura: Detectando...</span>
+            </div>
             <div class="btn-group">
-                <button class="btn btn-folder" id="download-folders-btn">📂 Descargar Carpetas (.ZIP)</button>
+                <button class="btn btn-folder" id="download-folders-btn">📂 Descargar Proyecto (.ZIP)</button>
                 <button class="btn btn-ae" id="export-ae-btn">📥 Exportar a After Effects</button>
             </div>
         </div>
         
         <div class="grid-layout">
             <div>
-                <div class="column-title">📁 Estructura del proyecto</div>
-                <div class="folder-tree" id="folder-tree-view">
+                <div class="column-title">📁 Organización del Disco Local</div>
+                <div class="folder-tree" id="folder-tree-view"></div>
+                
+                <div class="character-box">
+                    <div class="column-title" style="margin-bottom: 5px; color: #f38ba8;">🎭 Personajes de esta producción</div>
+                    <div class="character-list" id="character-list-view">
+                        <span class="character-tag main">👑 Nin (Principal)</span>
                     </div>
+                </div>
             </div>
             
             <div>
-                <div class="column-title">⏱️ Marcadores del Guion</div>
-                <div id="dynamic-cards-container"></div>
+                <div class="column-title">⏱️ Línea de Tiempo Sincronizada</div>
+                <div class="timeline-container" id="dynamic-cards-container"></div>
             </div>
         </div>
     </div>
@@ -260,6 +286,8 @@
     const workspaceContainer = document.getElementById('workspace-container');
     const dynamicCardsContainer = document.getElementById('dynamic-cards-container');
     const folderTreeView = document.getElementById('folder-tree-view');
+    const characterListView = document.getElementById('character-list-view');
+    const detectedCategory = document.getElementById('detected-category');
     const exportAeBtn = document.getElementById('export-ae-btn');
     const downloadFoldersBtn = document.getElementById('download-folders-btn');
 
@@ -268,6 +296,10 @@
     let srtContent = "";
     let marcadoresSincronizados = [];
     let nombreProyectoSanitizado = "Nuevo_Proyecto";
+    let categoriaProyecto = "General";
+    
+    // Lista de personajes recurrentes de la serie "NIN"
+    const amigosRecurrentes = ["Toti", "Lulu", "Milo", "Zipi"];
 
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
         dropzone.addEventListener(eventName, preventDefaults, false);
@@ -301,7 +333,6 @@
                 audioFile = file;
                 badgeAudio.innerText = `🎵 ${file.name}`;
                 badgeAudio.classList.add('loaded');
-                // Sanitizar el nombre para usarlo como carpeta del proyecto (quitar espacios raros y extensión)
                 nombreProyectoSanitizado = file.name.substring(0, file.name.lastIndexOf('.')).replace(/[^a-zA-Z0-9_]/g, "_");
             } else if (file.name.endsWith('.srt')) {
                 srtFile = file;
@@ -317,20 +348,20 @@
         });
 
         if (audioFile && srtFile) {
-            iniciarProcesamientoCompleto();
+            iniciarProcesamientoInteligente();
         } else {
             alert("Arrastra juntos el archivo de Audio y tu archivo .srt");
         }
     }
 
-    function iniciarProcesamientoCompleto() {
+    function iniciarProcesamientoInteligente() {
         loadingContainer.style.display = 'block';
         workspaceContainer.style.display = 'none';
         
         const etapas = [
-            { progreso: 30, texto: "Analizando estructura del guion..." },
-            { progreso: 60, texto: "Creando sistema de organización de carpetas..." },
-            { progreso: 100, texto: "¡Organización de producción completada!" }
+            { progreso: 30, texto: "Analizando guion y buscando palabras clave..." },
+            { progreso: 70, texto: "Clasificando asignatura y cargando biblioteca de Nin..." },
+            { progreso: 100, texto: "¡Entorno de producción listo!" }
         ];
 
         let etapaActual = 0;
@@ -351,11 +382,32 @@
     }
 
     function procesarDatos() {
-        // 1. Parsear el archivo SRT
         dynamicCardsContainer.innerHTML = "";
         marcadoresSincronizados = [];
-        const bloques = srtContent.replace(/\r\n/g, '\n').split('\n\n');
+        
+        // 1. Clasificación automática analizando el texto
+        const textoCompletoMinusculas = srtContent.toLowerCase();
+        
+        if (textoCompletoMinusculas.match(/siete|ocho|nueve|multiplicar|tabla|sumar|restar|número|numero/)) {
+            categoriaProyecto = "Matematicas";
+            detectedCategory.innerText = "📚 Asignatura: Matemáticas";
+            detectedCategory.style.backgroundColor = "#a6e3a1";
+        } else if (textoCompletoMinusculas.match(/geografia|mapa|río|rio|montaña|país|pais|planeta|tierra/)) {
+            categoriaProyecto = "Geografia";
+            detectedCategory.innerText = "🌍 Asignatura: Geografía";
+            detectedCategory.style.backgroundColor = "#89b4fa";
+        } else if (textoCompletoMinusculas.match(/lengua|verbo|sujeto|letra|abecedario|ortografía|palabra/)) {
+            categoriaProyecto = "Lengua";
+            detectedCategory.innerText = "✍️ Asignatura: Lengua";
+            detectedCategory.style.backgroundColor = "#f38ba8";
+        } else {
+            categoriaProyecto = "General";
+            detectedCategory.innerText = "🎵 Asignatura: General / Música";
+            detectedCategory.style.backgroundColor = "#cba6f7";
+        }
 
+        // 2. Parsear el archivo SRT
+        const bloques = srtContent.replace(/\r\n/g, '\n').split('\n\n');
         bloques.forEach((bloque) => {
             const lineas = bloque.split('\n').map(l => l.trim()).filter(l => l.length > 0);
             if (lineas.length >= 3) {
@@ -387,18 +439,30 @@
             dynamicCardsContainer.innerHTML += cardHtml;
         });
 
-        // 2. Dibujar la estructura visual de las carpetas
+        // 3. Pintar lista de personajes en pantalla
+        characterListView.innerHTML = `<span class="character-tag main">👑 Nin (Principal)</span>`;
+        amigosRecurrentes.forEach(amigo => {
+            characterListView.innerHTML += `<span class="character-tag">👤 ${amigo}</span>`;
+        });
+
+        // 4. Dibujar la estructura visual de las carpetas organizadas por CATEGORÍA
         folderTreeView.innerHTML = `
             📁 [PROYECTOS_NIN]<br>
-            <span class="folder-item">└── 📁 ${nombreProyectoSanitizado}</span><br>
-            <span class="file-item">├── 📁 01_Audio</span><br>
-            <span class="file-item" style="color: #a6e3a1; font-weight: bold;">│   └── 🎵 ${audioFile.name}</span><br>
-            <span class="file-item">├── 📁 02_Materiales</span><br>
-            <span class="file-item">│   ├── 📁 Fondos</span><br>
-            <span class="file-item">│   └── 📁 Personajes</span><br>
-            <span class="file-item">├── 📁 03_After_Effects</span><br>
-            <span class="file-item" style="color: #f9e2af;">│   └── ⚙️ importar_marcadores_SRT.jsx</span><br>
-            <span class="file-item">└── 📁 04_Renders</span>
+            <span class="folder-item">└── 📁 ${categoriaProyecto}</span><br>
+            <span class="file-item" style="color: #f9e2af;">└── 📁 ${nombreProyectoSanitizado}</span><br>
+            <span class="file-item" style="margin-left: 45px;">├── 📁 01_Audio</span><br>
+            <span class="file-item" style="margin-left: 60px; color: #a6e3a1;">└── 🎵 ${audioFile.name}</span><br>
+            <span class="file-item" style="margin-left: 45px;">├── 📁 02_Materiales</span><br>
+            <span class="file-item" style="margin-left: 60px;">├── 📁 Fondos</span><br>
+            <span class="file-item" style="margin-left: 60px; color: #f38ba8; font-weight: bold;">└── 📁 Personajes_NIN</span><br>
+            <span class="file-item" style="margin-left: 75px; color: #bac2de;">├── 👤 Nin_Principal.ai</span><br>
+            <span class="file-item" style="margin-left: 75px; color: #bac2de;">├── 👤 Toti.ai</span><br>
+            <span class="file-item" style="margin-left: 75px; color: #bac2de;">├── 👤 Lulu.ai</span><br>
+            <span class="file-item" style="margin-left: 75px; color: #bac2de;">├── 👤 Milo.ai</span><br>
+            <span class="file-item" style="margin-left: 75px; color: #bac2de;">└── 👤 Zipi.ai</span><br>
+            <span class="file-item" style="margin-left: 45px;">├── 📁 03_After_Effects</span><br>
+            <span class="file-item" style="margin-left: 60px; color: #89b4fa;">└── ⚙️ importar_marcadores_SRT.jsx</span><br>
+            <span class="file-item" style="margin-left: 45px;">└── 📁 04_Renders</span>
         `;
 
         workspaceContainer.style.display = 'block';
@@ -412,28 +476,37 @@
         return (horas * 3600) + (minutos * 60) + segundos;
     }
 
-    // EVENTO DEL BOTÓN DE CARPETAS: Generar el ZIP real estructurado
+    // EVENTO DEL BOTÓN DE CARPETAS: Generar el ZIP estructurado con Personajes
     downloadFoldersBtn.addEventListener('click', () => {
         const zip = new JSZip();
         
-        // Creamos el árbol real de carpetas en el ZIP
-        const folderPrincipal = zip.folder(nombreProyectoSanitizado);
-        const fAudio = folderPrincipal.folder("01_Audio");
-        const fMateriales = folderPrincipal.folder("02_Materiales");
+        // Creamos la jerarquía: [Asignatura] -> [Nombre_Proyecto]
+        const folderCategoria = zip.folder(categoriaProyecto);
+        const folderProyecto = folderCategoria.folder(nombreProyectoSanitizado);
+        
+        const fAudio = folderProyecto.folder("01_Audio");
+        const fMateriales = folderProyecto.folder("02_Materiales");
         fMateriales.folder("Fondos");
-        fMateriales.folder("Personajes");
-        const fAE = folderPrincipal.folder("03_After_Effects");
-        folderPrincipal.folder("04_Renders");
+        
+        // Creamos la carpeta de Personajes de NIN y pre-cargamos archivos plantilla vacíos
+        const fPersonajes = fMateriales.folder("Personajes_NIN");
+        fPersonajes.file("Nin_Principal.ai", "// Plantilla para ilustración de Nin");
+        amigosRecurrentes.forEach(amigo => {
+            fPersonajes.file(`${amigo}.ai`, `// Plantilla para ilustración de ${amigo}`);
+        });
 
-        // Metemos el audio que arrastró el usuario dentro de su carpeta
+        const fAE = folderProyecto.folder("03_After_Effects");
+        folderProyecto.folder("04_Renders");
+
+        // Metemos el audio importado por el usuario
         fAudio.file(audioFile.name, audioFile);
 
-        // Generamos el script de After Effects y lo metemos en su carpeta
-        let jsxCode = `// Script generado por NIN Studio Manager\n`;
-        jsxCode += `app.beginUndoGroup("Crear Marcadores NIN");\n`;
+        // Generamos el script de After Effects
+        let jsxCode = `// Script de producción generado por NIN Studio Manager\n`;
+        jsxCode += `app.beginUndoGroup("Marcadores Sincronizados");\n`;
         jsxCode += `var comp = app.project.activeItem || app.project.items.addComp("NIN_Comp", 1920, 1080, 1.0, 60, 29.97);\n`;
         jsxCode += `var markerLayer = comp.layers.addNull();\n`;
-        jsxCode += `markerLayer.name = "PLAN_DE_PRODUCCION_SRT";\n`;
+        jsxCode += `markerLayer.name = "PLAN_DE_PRODUCCION";\n`;
         
         marcadoresSincronizados.forEach((marcador, index) => {
             const textoLimpio = marcador.texto.replace(/"/g, '\\"');
@@ -442,15 +515,14 @@
         });
         
         jsxCode += `app.endUndoGroup();\n`;
-        
         fAE.file("importar_marcadores_SRT.jsx", jsxCode);
 
-        // Generar descarga
+        // Forzar descarga del ZIP
         zip.generateAsync({ type: "blob" }).then(function(content) {
             const url = URL.createObjectURL(content);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `${nombreProyectoSanitizado}_produccion.zip`;
+            a.download = `${nombreProyectoSanitizado}_produccion_NIN.zip`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -458,7 +530,7 @@
         });
     });
 
-    // EVENTO DEL BOTÓN DE AE: Descargar solo el script por separado
+    // EVENTO DEL BOTÓN DE AE
     exportAeBtn.addEventListener('click', () => {
         if (marcadoresSincronizados.length === 0) return;
 
