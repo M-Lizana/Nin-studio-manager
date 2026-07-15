@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NIN Studio Manager - Prototipo IA</title>
+    <title>NIN Studio Manager - Sincronizador de Letra</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -51,6 +51,24 @@
             font-size: 40px;
             margin-bottom: 10px;
             color: #89b4fa;
+        }
+        .file-status-container {
+            margin-top: 15px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            font-size: 14px;
+        }
+        .file-badge {
+            background-color: #313244;
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid #45475a;
+        }
+        .file-badge.loaded {
+            background-color: rgba(166, 227, 161, 0.1);
+            border-color: #a6e3a1;
+            color: #a6e3a1;
         }
         /* Barra de carga */
         .loading-container {
@@ -130,11 +148,6 @@
             margin-right: 5px;
             border: 1px solid #45475a;
         }
-        .reused-tag {
-            background-color: rgba(166, 227, 161, 0.1);
-            color: #a6e3a1;
-            border: 1px solid #a6e3a1;
-        }
     </style>
 </head>
 <body>
@@ -143,75 +156,44 @@
     <h1>NIN Studio Manager</h1>
     
     <div class="dropzone" id="dropzone">
-        <div class="dropzone-icon">🎵</div>
+        <div class="dropzone-icon">📁</div>
         <div class="dropzone-text" id="dropzone-instruction">
-            <strong>Arrastra aquí tu audio (.mp3 o .wav)</strong><br>
-            o haz clic para buscar en tu PC
+            <strong>Selecciona y arrastra JUNTOS el audio (.mp3/.wav) y la letra (.txt)</strong><br>
+            o suéltalos aquí a la vez
         </div>
-        <div id="file-name" style="color: #a6e3a1; font-weight: bold;"></div>
+        
+        <div class="file-status-container">
+            <div class="file-badge" id="badge-audio">❌ Sin Audio</div>
+            <div class="file-badge" id="badge-text">❌ Sin Letra (.txt)</div>
+        </div>
     </div>
 
-    <!-- Pantalla de Carga de IA -->
     <div class="loading-container" id="loading-container">
         <div class="progress-bar">
             <div class="progress-fill" id="progress-fill"></div>
         </div>
-        <div class="loading-text" id="loading-text">Leyendo metadatos...</div>
+        <div class="loading-text" id="loading-text">Esperando archivos...</div>
     </div>
 
-    <!-- Resultados Generados por la IA -->
     <div class="results-container" id="results-container">
-        <div class="results-title">✨ Plan de Animación Generado por la IA</div>
-        
-        <div class="timeline-card">
-            <div class="card-header">
-                <span>Escena 1: Introducción Musical</span>
-                <span class="time-badge">00:00 - 00:08</span>
-            </div>
-            <div class="card-body">
-                <strong>Visual:</strong> Plano general de la granja con el amanecer. Los elementos de fondo se mueven suavemente.<br>
-                <strong>Efecto After Effects recomendado:</strong> Cámara lenta con escala continua (Zoom suave).<br>
-                <div class="assets-tag">fondo_granja_amanecer.ai</div>
-                <div class="assets-tag reused-tag">♻️ Reutilizable: granja_vectorial_v2</div>
-            </div>
-        </div>
-
-        <div class="timeline-card" style="border-left-color: #f9e2af;">
-            <div class="card-header">
-                <span>Escena 2: Presentación del Personaje</span>
-                <span class="time-badge">00:08 - 00:18</span>
-            </div>
-            <div class="card-body">
-                <strong>Visual:</strong> Aparece el personaje de "La Vaca Lola" dando brincos desde el lateral derecho de la pantalla al compás del bombo.<br>
-                <strong>Efecto After Effects recomendado:</strong> Expresión de rebote (Overshoot) al entrar.<br>
-                <div class="assets-tag">vaca_lola_cuerpo_entero.ai</div>
-                <div class="assets-tag">efecto_brillo.aep</div>
-            </div>
-        </div>
-
-        <div class="timeline-card" style="border-left-color: #a6e3a1;">
-            <div class="card-header">
-                <span>Escena 3: Estribillo Principal</span>
-                <span class="time-badge">00:18 - 00:30</span>
-            </div>
-            <div class="card-body">
-                <strong>Visual:</strong> El fondo cambia a un plano medio. La vaca baila y la letra de la canción se ilumina detrás de ella con tipografía grande.<br>
-                <strong>Efecto After Effects recomendado:</strong> Sincronización de texto por marcadores de capa.<br>
-                <div class="assets-tag">vaca_lola_baile.ai</div>
-                <div class="assets-tag">letras_animadas_preset</div>
-            </div>
-        </div>
+        <div class="results-title">✨ Plan de Animación Real (Basado en tu Letra)</div>
+        <div id="dynamic-cards-container"></div>
     </div>
 </div>
 
 <script>
     const dropzone = document.getElementById('dropzone');
-    const instructionText = document.getElementById('dropzone-instruction');
-    const fileNameDiv = document.getElementById('file-name');
+    const badgeAudio = document.getElementById('badge-audio');
+    const badgeText = document.getElementById('badge-text');
     const loadingContainer = document.getElementById('loading-container');
     const progressFill = document.getElementById('progress-fill');
     const loadingText = document.getElementById('loading-text');
     const resultsContainer = document.getElementById('results-container');
+    const dynamicCardsContainer = document.getElementById('dynamic-cards-container');
+
+    let audioFile = null;
+    let textFile = null;
+    let letraContenido = "";
 
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
         dropzone.addEventListener(eventName, preventDefaults, false);
@@ -238,32 +220,43 @@
 
     function handleDrop(e) {
         const dt = e.dataTransfer;
-        const files = dt.files;
+        const files = Array.from(dt.files);
 
-        if(files.length > 0) {
-            const file = files[0];
-            if(file.name.endsWith('.mp3') || file.name.endsWith('.wav')) {
-                // Escondemos instrucción y mostramos nombre de archivo
-                instructionText.style.display = 'none';
-                fileNameDiv.innerHTML = `🎵 ${file.name}`;
+        files.forEach(file => {
+            if (file.name.endsWith('.mp3') || file.name.endsWith('.wav')) {
+                audioFile = file;
+                badgeAudio.innerText = `🎵 ${file.name}`;
+                badgeAudio.classList.add('loaded');
+            } else if (file.name.endsWith('.txt')) {
+                textFile = file;
+                badgeText.innerText = `📄 ${file.name}`;
+                badgeText.classList.add('loaded');
                 
-                // Empezamos la simulación de IA
-                iniciarAnalisisIA();
-            } else {
-                alert('Por favor, arrastra solo archivos de audio .mp3 o .wav');
+                // Leer el contenido del archivo de texto
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    letraContenido = event.target.result;
+                };
+                reader.readAsText(file);
             }
+        });
+
+        // Si tenemos ambos archivos, iniciamos el proceso
+        if (audioFile && textFile) {
+            iniciarAnalisisReal();
+        } else {
+            alert("Para este análisis real, necesitas arrastrar tanto el archivo de Audio como el archivo .txt con la letra.");
         }
     }
 
-    function iniciarAnalisisIA() {
+    function iniciarAnalisisReal() {
         loadingContainer.style.display = 'block';
         resultsContainer.style.display = 'none';
         
         const etapas = [
-            { progreso: 20, texto: "Analizando ondas y BPM de la canción..." },
-            { progreso: 50, texto: "Buscando archivos de letra (.txt) coincidentes..." },
-            { progreso: 80, texto: "Gemini estructurando el plan de producción..." },
-            { progreso: 100, texto: "¡Análisis completado con éxito!" }
+            { progreso: 25, texto: "Extrayendo audio y sincronizando con " + textFile.name },
+            { progreso: 60, texto: "Analizando estrofas de la letra..." },
+            { progreso: 100, texto: "¡Análisis de letra completado!" }
         ];
 
         let etapaActual = 0;
@@ -277,10 +270,56 @@
                 clearInterval(intervalo);
                 setTimeout(() => {
                     loadingContainer.style.display = 'none';
-                    resultsContainer.style.display = 'block';
+                    procesarYMostrarLetra();
                 }, 600);
             }
-        }, 1500); // Cambia de fase cada segundo y medio
+        }, 1200);
+    }
+
+    function procesarYMostrarLetra() {
+        // Limpiamos resultados anteriores
+        dynamicCardsContainer.innerHTML = "";
+
+        // Dividimos la letra por párrafos (estrofas)
+        const parrafos = letraContenido.split('\n').map(p => p.trim()).filter(p => p.length > 0);
+
+        if (parrafos.length === 0) {
+            parrafos.push("No se pudo leer texto en el archivo cargado.");
+        }
+
+        // Generamos dinámicamente una escena por cada párrafo/estrofa de TU archivo de texto
+        parrafos.forEach((parrafo, index) => {
+            const numEscena = index + 1;
+            const segInicio = index * 10;
+            const segFin = (index + 1) * 10;
+
+            // Intentamos buscar palabras clave para personalizar ilustraciones
+            let ilustracionSugerida = "ilustracion_general.ai";
+            if (parrafo.toLowerCase().includes("siete") || parrafo.includes("7")) {
+                ilustracionSugerida = "numero_siete_animado.ai";
+            } else if (parrafo.toLowerCase().includes("tabla")) {
+                ilustracionSugerida = "pizarra_matematicas.ai";
+            }
+
+            const cardHtml = `
+                <div class="timeline-card" style="border-left-color: ${index % 2 === 0 ? '#89b4fa' : '#f9e2af'}">
+                    <div class="card-header">
+                        <span>Escena ${numEscena}: Segmento de Animación</span>
+                        <span class="time-badge">00:${segInicio.toString().padStart(2, '0')} - 00:${segFin.toString().padStart(2, '0')}</span>
+                    </div>
+                    <div class="card-body">
+                        <strong>Letra procesada:</strong> "${parrafo}"<br><br>
+                        <strong>Visual sugerido:</strong> Animación del texto en pantalla sincronizada con la locución. Aparecen elementos visuales que refuercen la idea principal.<br>
+                        <strong>Efecto AE recomendado:</strong> Animación de escala por palabra clave.<br>
+                        <div class="assets-tag">${ilustracionSugerida}</div>
+                        <div class="assets-tag">audio_sincronizado.wav</div>
+                    </div>
+                </div>
+            `;
+            dynamicCardsContainer.innerHTML += cardHtml;
+        });
+
+        resultsContainer.style.display = 'block';
     }
 </script>
 
