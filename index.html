@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NIN Studio Manager - Prototipo</title>
+    <title>NIN Studio Manager - Prototipo IA</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -12,12 +12,14 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
         }
         .container {
-            width: 90%;
-            max-width: 600px;
+            width: 100%;
+            max-width: 800px;
             background-color: #252538;
             padding: 30px;
             border-radius: 12px;
@@ -32,7 +34,7 @@
         .dropzone {
             border: 3px dashed #89b4fa;
             border-radius: 10px;
-            padding: 50px 20px;
+            padding: 40px 20px;
             cursor: pointer;
             transition: background-color 0.3s, border-color 0.3s;
             background-color: #1e1e2e;
@@ -50,26 +52,88 @@
             margin-bottom: 10px;
             color: #89b4fa;
         }
-        .tip-box {
-            margin-top: 25px;
-            padding: 15px;
+        /* Barra de carga */
+        .loading-container {
+            display: none;
+            margin: 20px 0;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 8px;
             background-color: #313244;
-            border-left: 4px solid #f9e2af;
             border-radius: 4px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            width: 0%;
+            height: 100%;
+            background-color: #a6e3a1;
+            transition: width 0.4s ease;
+        }
+        .loading-text {
+            color: #a6e3a1;
+            font-size: 14px;
+            margin-top: 8px;
+        }
+        /* Resultados de la IA */
+        .results-container {
+            display: none;
+            margin-top: 30px;
             text-align: left;
+            animation: fadeIn 0.5s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .results-title {
+            color: #f9e2af;
+            font-size: 18px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #313244;
+            padding-bottom: 8px;
+        }
+        .timeline-card {
+            background-color: #11111b;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 12px;
+            border-left: 4px solid #89b4fa;
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+        .time-badge {
+            background-color: #89b4fa;
+            color: #11111b;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+        }
+        .card-body {
             font-size: 13px;
             color: #bac2de;
-            line-height: 1.5;
+            line-height: 1.4;
         }
-        .tip-title {
-            font-weight: bold;
-            color: #f9e2af;
-            margin-bottom: 5px;
+        .assets-tag {
+            display: inline-block;
+            background-color: #313244;
+            color: #cdd6f4;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            margin-top: 8px;
+            margin-right: 5px;
+            border: 1px solid #45475a;
         }
-        #file-name {
-            margin-top: 15px;
-            font-weight: bold;
+        .reused-tag {
+            background-color: rgba(166, 227, 161, 0.1);
             color: #a6e3a1;
+            border: 1px solid #a6e3a1;
         }
     </style>
 </head>
@@ -84,21 +148,71 @@
             <strong>Arrastra aquí tu audio (.mp3 o .wav)</strong><br>
             o haz clic para buscar en tu PC
         </div>
-        <div id="file-name"></div>
+        <div id="file-name" style="color: #a6e3a1; font-weight: bold;"></div>
     </div>
 
-    <div class="tip-box">
-        <div class="tip-title">ℹ️ Consejo de producción</div>
-        Recuerda nombrar la letra de la canción igual que el audio (ej: <code>cancion1.mp3</code> y <code>cancion1.txt</code>). La app los emparejará y analizará automáticamente en segundo plano.
+    <!-- Pantalla de Carga de IA -->
+    <div class="loading-container" id="loading-container">
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill"></div>
+        </div>
+        <div class="loading-text" id="loading-text">Leyendo metadatos...</div>
+    </div>
+
+    <!-- Resultados Generados por la IA -->
+    <div class="results-container" id="results-container">
+        <div class="results-title">✨ Plan de Animación Generado por la IA</div>
+        
+        <div class="timeline-card">
+            <div class="card-header">
+                <span>Escena 1: Introducción Musical</span>
+                <span class="time-badge">00:00 - 00:08</span>
+            </div>
+            <div class="card-body">
+                <strong>Visual:</strong> Plano general de la granja con el amanecer. Los elementos de fondo se mueven suavemente.<br>
+                <strong>Efecto After Effects recomendado:</strong> Cámara lenta con escala continua (Zoom suave).<br>
+                <div class="assets-tag">fondo_granja_amanecer.ai</div>
+                <div class="assets-tag reused-tag">♻️ Reutilizable: granja_vectorial_v2</div>
+            </div>
+        </div>
+
+        <div class="timeline-card" style="border-left-color: #f9e2af;">
+            <div class="card-header">
+                <span>Escena 2: Presentación del Personaje</span>
+                <span class="time-badge">00:08 - 00:18</span>
+            </div>
+            <div class="card-body">
+                <strong>Visual:</strong> Aparece el personaje de "La Vaca Lola" dando brincos desde el lateral derecho de la pantalla al compás del bombo.<br>
+                <strong>Efecto After Effects recomendado:</strong> Expresión de rebote (Overshoot) al entrar.<br>
+                <div class="assets-tag">vaca_lola_cuerpo_entero.ai</div>
+                <div class="assets-tag">efecto_brillo.aep</div>
+            </div>
+        </div>
+
+        <div class="timeline-card" style="border-left-color: #a6e3a1;">
+            <div class="card-header">
+                <span>Escena 3: Estribillo Principal</span>
+                <span class="time-badge">00:18 - 00:30</span>
+            </div>
+            <div class="card-body">
+                <strong>Visual:</strong> El fondo cambia a un plano medio. La vaca baila y la letra de la canción se ilumina detrás de ella con tipografía grande.<br>
+                <strong>Efecto After Effects recomendado:</strong> Sincronización de texto por marcadores de capa.<br>
+                <div class="assets-tag">vaca_lola_baile.ai</div>
+                <div class="assets-tag">letras_animadas_preset</div>
+            </div>
+        </div>
     </div>
 </div>
 
 <script>
     const dropzone = document.getElementById('dropzone');
-    const fileNameDiv = document.getElementById('file-name');
     const instructionText = document.getElementById('dropzone-instruction');
+    const fileNameDiv = document.getElementById('file-name');
+    const loadingContainer = document.getElementById('loading-container');
+    const progressFill = document.getElementById('progress-fill');
+    const loadingText = document.getElementById('loading-text');
+    const resultsContainer = document.getElementById('results-container');
 
-    // Prevenir comportamientos por defecto al arrastrar archivos
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
         dropzone.addEventListener(eventName, preventDefaults, false);
     });
@@ -108,7 +222,6 @@
         e.stopPropagation();
     }
 
-    // Efecto visual al arrastrar encima
     ['dragenter', 'dragover'].forEach(eventName => {
         dropzone.addEventListener(eventName, () => {
             dropzone.style.backgroundColor = 'rgba(137, 180, 250, 0.15)';
@@ -121,7 +234,6 @@
         }, false);
     });
 
-    // Detectar archivo soltado
     dropzone.addEventListener('drop', handleDrop, false);
 
     function handleDrop(e) {
@@ -131,15 +243,44 @@
         if(files.length > 0) {
             const file = files[0];
             if(file.name.endsWith('.mp3') || file.name.endsWith('.wav')) {
+                // Escondemos instrucción y mostramos nombre de archivo
                 instructionText.style.display = 'none';
-                fileNameDiv.innerHTML = `✅ Archivo cargado: ${file.name} (${(file.size/1024/1024).toFixed(2)} MB)`;
+                fileNameDiv.innerHTML = `🎵 ${file.name}`;
                 
-                // Aquí es donde en el futuro llamaremos a la IA para que empiece la magia
-                alert(`¡Audio "${file.name}" detectado! Iniciando análisis silencioso de ritmo...`);
+                // Empezamos la simulación de IA
+                iniciarAnalisisIA();
             } else {
                 alert('Por favor, arrastra solo archivos de audio .mp3 o .wav');
             }
         }
+    }
+
+    function iniciarAnalisisIA() {
+        loadingContainer.style.display = 'block';
+        resultsContainer.style.display = 'none';
+        
+        const etapas = [
+            { progreso: 20, texto: "Analizando ondas y BPM de la canción..." },
+            { progreso: 50, texto: "Buscando archivos de letra (.txt) coincidentes..." },
+            { progreso: 80, texto: "Gemini estructurando el plan de producción..." },
+            { progreso: 100, texto: "¡Análisis completado con éxito!" }
+        ];
+
+        let etapaActual = 0;
+
+        const intervalo = setInterval(() => {
+            if (etapaActual < etapas.length) {
+                progressFill.style.width = etapas[etapaActual].progreso + '%';
+                loadingText.innerText = etapas[etapaActual].texto;
+                etapaActual++;
+            } else {
+                clearInterval(intervalo);
+                setTimeout(() => {
+                    loadingContainer.style.display = 'none';
+                    resultsContainer.style.display = 'block';
+                }, 600);
+            }
+        }, 1500); // Cambia de fase cada segundo y medio
     }
 </script>
 
